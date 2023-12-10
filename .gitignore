@@ -1,0 +1,7 @@
+testset/*
+trainset/*
+__pycache__/*
+
+testing.ipynb
+launch.json
+*.DS_Store

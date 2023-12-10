@@ -1,0 +1,10 @@
+train folder: 'trainset'
+test folder: 'testset'
+label file: 'trainset/key-meter_train_gt.txt'
+output folder: 'output'
+
+train split: 0.8
+batch size: 16
+kernel size: 3
+train epochs: 100
+learning rate: 0.001
