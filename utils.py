@@ -13,8 +13,7 @@ def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
     train_loader, test_loader = get_dataloaders(dataset, config)
 
     model.train()
-    total_step = len(train_loader)
-    mse = torch.nn.MSELoss()
+    tempoLoss = TempoLoss()
 
     start_time = time.time()
     num_epoch = config['train epochs']
@@ -27,7 +26,7 @@ def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
         ):
             outputs = model(datastream)
             bpm = bpm.float()
-            loss = mse(outputs.squeeze(), bpm)
+            loss = tempoLoss(outputs.squeeze(), bpm)
 
             optimizer.zero_grad()
             loss.backward()
@@ -67,8 +66,24 @@ def open_midi_file(path: str):
     return sorted(result)
 
 
-def compute_tempo_error(pred_tempo, target_tempo):
-    tempo_error = abs(pred_tempo - target_tempo)
-    half_tempo_error = abs(0.5 * pred_tempo - target_tempo)
-    double_tempo_error = abs(2 * pred_tempo - target_tempo)
-    return min(tempo_error, half_tempo_error, double_tempo_error)
+class TempoLoss(nn.Module):
+    def __init__(self):
+        super(TempoLoss, self).__init__()
+
+    def forward(self, predictions, targets):
+        tempo_error = torch.mean(torch.abs(predictions - targets))
+        half_tempo_error = torch.mean(torch.abs(0.5 * predictions - targets))
+        double_tempo_error = torch.mean(torch.abs(2 * predictions - targets))
+        return torch.min(torch.min(tempo_error, half_tempo_error), double_tempo_error)
+
+
+def compute_tempo_error(model, dataloader):
+    model.eval()
+    tempoLoss = TempoLoss()
+    error = torch.tensor([])
+    for path, key, num, denom, bpm, datastream in dataloader:
+        pred = model(datastream)
+        current = tempoLoss(pred.squeeze(), bpm.float())
+        error = torch.cat([error, current])
+    model.train()
+    return float(torch.mean(error))
