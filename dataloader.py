@@ -12,7 +12,7 @@ class MIDIDataset(Dataset):
         label_path = config['label file']
         with open(label_path, 'r') as f:
             labels = f.readlines()
-            labels = sorted(labels)
+            labels = sorted(labels)[:10]
 
         dataset = []
         for line in tqdm(labels[1:], desc='Loading Dataset'):

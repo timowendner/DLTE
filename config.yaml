@@ -6,5 +6,5 @@ output folder: 'output'
 train split: 0.8
 batch size: 16
 kernel size: 3
-train epochs: 100
+train epochs: 10
 learning rate: 0.001

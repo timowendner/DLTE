@@ -9,11 +9,9 @@ from dataloader import get_dataloaders, MIDIDataset
 
 
 def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
-    # create the dataset
     dataset = MIDIDataset(config)
     train_loader, test_loader = get_dataloaders(dataset, config)
 
-    # Train the model
     model.train()
     total_step = len(train_loader)
     mse = torch.nn.MSELoss()
@@ -21,20 +19,16 @@ def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
     start_time = time.time()
     num_epoch = config['train epochs']
     for epoch in range(1, num_epoch+1):
-        # print the epoch and current time
+
         time_now = datetime.datetime.now()
         time_now = time_now.strftime("%H:%M")
-
-        # loop through the training loader
         for i, (path, key, num, denom, bpm, datastream) in tqdm(
             enumerate(train_loader), desc=f'{time_now} Starting Epoch {epoch}', total=len(train_loader)
         ):
-            # Forward pass
             outputs = model(datastream)
             bpm = bpm.float()
             loss = mse(outputs.squeeze(), bpm)
 
-            # calculate gradients
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -71,3 +65,10 @@ def open_midi_file(path: str):
             del open_notes[pitch]
             result.append((start, current - start, velocity, pitch))
     return sorted(result)
+
+
+def compute_tempo_error(pred_tempo, target_tempo):
+    tempo_error = abs(pred_tempo - target_tempo)
+    half_tempo_error = abs(0.5 * pred_tempo - target_tempo)
+    double_tempo_error = abs(2 * pred_tempo - target_tempo)
+    return min(tempo_error, half_tempo_error, double_tempo_error)
