@@ -1,11 +1,11 @@
 import yaml
 import torch
 import argparse
+from tqdm import tqdm
 
 from .dataloader import MIDIDataset, get_dataloaders
 from .training_testing import train_network
 from .model import CNN, RNN
-from .utils import write_file
 
 
 def main():
@@ -28,8 +28,6 @@ def main():
     lr = config['learning rate']
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     model, optimizer = train_network(model, optimizer, config)
-    if config['write file']:
-        write_file(model, config)
     return model
 
 

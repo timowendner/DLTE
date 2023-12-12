@@ -1,5 +1,6 @@
 testset/*
 trainset/*
+output/*
 __pycache__/*
 
 testing.ipynb

@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import time
 import datetime
@@ -48,8 +49,46 @@ def compute_tempo_error(model, dataloader):
     return float(torch.mean(error))
 
 
-def write_file(model, config):
-    files = glob.glob(os.path.join(config['test folder'], '*.mid'))
-    result = []
-    for file in tqdm(files, desc='\t Writing Files', total=len(files)):
-        dataset = open_midi_file(file)
+class FileWriter:
+    def __init__(self, config) -> None:
+        self.config = config
+        files = glob.glob(os.path.join(config['test folder'], '*.mid'))
+        files = sorted(files)
+        if 'debug size' in config:
+            files = files[:config['debug size']]
+        results = []
+        for file in tqdm(files, desc='Load Test Files', ncols=75):
+            datastream = open_midi_file(file)
+            datastream = torch.Tensor(datastream).float().T
+            for i in range(config['n order differences']):
+                diffs = torch.zeros(datastream[0].shape[0])
+                diffs[1:] = torch.diff(datastream[0])
+                datastream = torch.cat([diffs.unsqueeze(0), datastream], dim=0)
+            results.append(((os.path.basename(file)), datastream))
+        self.data = results
+
+    def write(self, model):
+        model.eval()
+        results = []
+        for file, datastream in self.data:
+            size = datastream.shape[1]
+            length = self.config['Data Length']
+            r = np.random.randint(0, max(1, size-length))
+            current = datastream[:, r:r+length]
+            padding = torch.zeros((datastream.shape[0], length))
+            padding[:, length-current.shape[1]:] = current
+            datastream = padding.to(self.config['device']).unsqueeze(0)
+            pred = float(model(datastream))
+            results.append((file, pred))
+        model.train()
+
+        output_file = self.config['output file']
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        np.savetxt(
+            output_file,
+            np.array(results),
+            fmt="%s",
+            delimiter=",",
+            comments="//",
+            header="filename,ts_num,tempo(bpm)",
+        )

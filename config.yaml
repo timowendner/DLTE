@@ -1,27 +1,28 @@
 train folder: 'MeterTest/trainset'
 test folder: 'MeterTest/testset'
 label file: 'MeterTest/trainset/key-meter_train_gt.txt'
-output folder: 'MeterTest/output'
+output file: MeterTest/output/outputs.txt
 
-write file: True
-write and test every n iteration: 1
+write every n iteration: 10
 
 train split: 0.8
-learning rate: 0.0001
-train epochs: 1000
+learning rate: 0.0005
+train epochs: 250
 batch size: 16
-Data Length: 150
-Dropout: 0.2
-n order differences: 16
+Data Length: 350
+Dropout: 0.25
+n order differences: 36
 
 # the model class: 'CNN', 'RNN'
 model class: 'CNN'
 
 # settings for the CNN
 kernel size: 5
-CNN features: [200, 200, 200, 200]
-Output features: [500, 500, 200, 1]
+CNN features: [200, 400, 450, 200]
+Output features: [500, 200, 1]
 
 # settings for the RNN
 bidirectional: False
 hidden size: 500
+
+# debug size: 20

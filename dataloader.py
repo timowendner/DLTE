@@ -14,10 +14,12 @@ class MIDIDataset(Dataset):
         label_path = config['label file']
         with open(label_path, 'r') as f:
             labels = f.readlines()
-            labels = sorted(labels)[:20]
+            labels = sorted(labels)
+            if 'debug size' in config:
+                labels = labels[:config['debug size']+1]
 
         dataset = []
-        for line in tqdm(labels[1:], desc='Loading Dataset'):
+        for line in tqdm(labels[1:], desc='Loading Dataset', ncols=75):
             path, key, num, denom, bpm = line.replace('\n', '').split(',')
             path = os.path.join(config['train folder'], path)
 
@@ -70,7 +72,8 @@ def get_dataloaders(dataset, config):
     test_size = len(dataset) - train_size
 
     train_dataset, test_dataset = random_split(
-        dataset, [train_size, test_size])
+        dataset, [train_size, test_size]
+    )
 
     batch_size = config['batch size']
     collate = rnn_collate_fn if config['model class'] == 'RNN' else None
