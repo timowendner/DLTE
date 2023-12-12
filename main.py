@@ -1,13 +1,14 @@
 import yaml
 import torch
+import argparse
 
-from dataloader import MIDIDataset, get_dataloaders
-from training_testing import train_network
-from model import CNN, RNN
+from .dataloader import MIDIDataset, get_dataloaders
+from .training_testing import train_network
+from .model import CNN, RNN
 
 
 def main():
-    with open('config.yaml', 'r') as f:
+    with open(args.config, 'r') as f:
         config = yaml.safe_load(f)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -30,4 +31,11 @@ def main():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--config',
+        help='Path to the config file',
+        default='config.yaml'
+    )
+    args = parser.parse_args()
     main()

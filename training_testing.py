@@ -7,8 +7,8 @@ from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 
 
-from dataloader import get_dataloaders, MIDIDataset, rnn_collate_fn
-from utils import TempoLoss
+from .dataloader import get_dataloaders, MIDIDataset, rnn_collate_fn
+from .utils import TempoLoss
 
 
 def train_network(model: nn.Module, optimizer: torch.optim, config: dict):

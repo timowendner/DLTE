@@ -6,7 +6,7 @@ from torch.utils.data import Dataset, DataLoader, random_split
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
 from tqdm import tqdm
 
-from utils import open_midi_file
+from .utils import open_midi_file
 
 
 class MIDIDataset(Dataset):
@@ -14,7 +14,7 @@ class MIDIDataset(Dataset):
         label_path = config['label file']
         with open(label_path, 'r') as f:
             labels = f.readlines()
-            labels = sorted(labels)[:10]
+            labels = sorted(labels)
 
         dataset = []
         for line in tqdm(labels[1:], desc='Loading Dataset'):
