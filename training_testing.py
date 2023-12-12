@@ -8,12 +8,16 @@ from torch.utils.data import Dataset, DataLoader
 
 
 from .dataloader import get_dataloaders, MIDIDataset, rnn_collate_fn
-from .utils import TempoLoss
+from .utils import TempoLoss, write_file
 
 
 def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Number of trainable parameters: {num_params:,}")
+
+    with open(config['label file'], 'r') as f:
+        labels = f.readlines()
+        labels = sorted(labels)
 
     dataset = MIDIDataset(config)
     train_loader, test_loader = get_dataloaders(dataset, config)
@@ -38,9 +42,12 @@ def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
             loss.backward()
             optimizer.step()
 
-        lr = optimizer.param_groups[0]['lr']
-        error = test_network(model, test_loader, config)
-        print(f'\t current error: {error:.4f}, lr: {lr}')
+        n_iter = config['write and test every n iteration']
+        if epoch % n_iter == 0:
+            lr = optimizer.param_groups[0]['lr']
+            error = test_network(model, test_loader, config)
+            print(f'\t current error: {error:.4f}, lr: {lr}')
+            # write_file(model, config)
     return model, optimizer
 
 

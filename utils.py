@@ -1,6 +1,8 @@
 import torch
 import time
 import datetime
+import os
+import glob
 from mido import MidiFile
 from torch import nn
 from tqdm import tqdm
@@ -44,3 +46,10 @@ def compute_tempo_error(model, dataloader):
         error = torch.cat([error, current])
     model.train()
     return float(torch.mean(error))
+
+
+def write_file(model, config):
+    files = glob.glob(os.path.join(config['test folder'], '*.mid'))
+    result = []
+    for file in tqdm(files, desc='\t Writing Files', total=len(files)):
+        dataset = open_midi_file(file)
