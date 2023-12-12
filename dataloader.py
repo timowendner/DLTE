@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import glob
 import os
@@ -13,26 +14,28 @@ class MIDIDataset(Dataset):
         label_path = config['label file']
         with open(label_path, 'r') as f:
             labels = f.readlines()
-            labels = sorted(labels)
+            labels = sorted(labels)[:10]
 
         dataset = []
-        data_length = config['Data Length']
         for line in tqdm(labels[1:], desc='Loading Dataset'):
             path, key, num, denom, bpm = line.replace('\n', '').split(',')
             path = os.path.join(config['train folder'], path)
-            datastream = open_midi_file(path)
-            while len(datastream) >= data_length:
-                current = torch.tensor(datastream[:data_length])
-                current = current.float().T
-                datastream = datastream[data_length:]
-                dataset.append(
-                    (path, key, int(num), int(denom), float(bpm), current)
-                )
 
+            datastream = open_midi_file(path)
+            datastream = torch.Tensor(datastream).float().T
+            for i in range(config['n order differences']):
+                diffs = torch.zeros(datastream[0].shape[0])
+                diffs[1:] = torch.diff(datastream[0])
+                datastream = torch.cat([diffs.unsqueeze(0), datastream], dim=0)
+            dataset.append(
+                (path, key, int(num), int(denom), float(bpm), datastream)
+            )
         if len(dataset) == 0:
             raise AttributeError('Data path seems to be empty')
 
         self.device = config['device']
+        self.model = config['model class']
+        self.data_length = config['Data Length']
         self.dataset = dataset
 
     def __len__(self):
@@ -40,6 +43,16 @@ class MIDIDataset(Dataset):
 
     def __getitem__(self, idx):
         path, key, num, denom, bpm, datastream = self.dataset[idx]
+        if self.model == 'CNN':
+            size = datastream.shape[1]
+            length = self.data_length
+            r = np.random.randint(0, max(1, size-length))
+            current = datastream[:, r:r+length]
+            padding = torch.zeros((datastream.shape[0], length))
+            padding[:, length-current.shape[1]:] = current
+            datastream = padding
+        elif self.model == 'RNN':
+            datastream = datastream.T
         datastream = datastream.to(self.device)
         return path, key, num, denom, bpm, datastream
 

@@ -32,7 +32,7 @@ class CNN(nn.Module):
         self.pool = nn.MaxPool1d(2)
 
         self.layers = nn.ModuleList([])
-        last = 4
+        last = 4 + config['n order differences']
         for feature in config['CNN features']:
             data_length = data_length // 2
             layer = convolve(last, feature, kernel=kernel, dropout=dropout)
@@ -63,8 +63,12 @@ class RNN(nn.Module):
 
         bidirectional = config['bidirectional']
         hidden_size = config['hidden size']
+        input_size = 4 + config['n order differences']
         self.rnn = nn.LSTM(
-            150, hidden_size, bidirectional=bidirectional)
+            input_size,
+            hidden_size,
+            bidirectional=bidirectional
+        )
         self.dropout = nn.Dropout(config['Dropout'])
         hidden_size *= 1 + bidirectional
         self.linear = nn.Linear(hidden_size, 1)
