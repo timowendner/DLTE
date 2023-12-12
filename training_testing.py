@@ -31,7 +31,7 @@ def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
             enumerate(train_loader), desc=f'{time_now} Starting Epoch {epoch:>3}', total=len(train_loader)
         ):
             outputs = model(datastream)
-            bpm = bpm.float()
+            bpm = bpm.float().to(config['device'])
             loss = tempoLoss(outputs.squeeze(), bpm)
 
             optimizer.zero_grad()
@@ -41,14 +41,6 @@ def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
         lr = optimizer.param_groups[0]['lr']
         error = test_network(model, test_loader, config)
         print(f'\t current error: {error:.4f}, lr: {lr}')
-
-        # # add the number of epochs
-        # config.current_epoch += 1
-
-        # # save the model if enough time has passed
-        # if abs(time.time() - start_time) >= config.save_time or epoch == num_epoch:
-        #     save_model(model, optimizer, config)
-        #     start_time = time.time()
     return model, optimizer
 
 
