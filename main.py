@@ -33,9 +33,11 @@ def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--config',
-        help='Path to the config file',
-        default='config.yaml'
+        "--config",
+        "-c",
+        help="Path to the config file",
+        type=str,
+        default="config.yaml",
     )
     args = parser.parse_args()
     main()
