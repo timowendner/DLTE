@@ -4,7 +4,20 @@ label file: 'trainset/key-meter_train_gt.txt'
 output folder: 'output'
 
 train split: 0.8
+learning rate: 0.0001
+train epochs: 100
 batch size: 16
-kernel size: 3
-train epochs: 10
-learning rate: 0.001
+Data Length: 150
+Dropout: 0.2
+
+# the model class: 'CNN', 'RNN'
+model class: 'RNN'
+
+# settings for the CNN
+kernel size: 5
+CNN features: [200, 200, 200, 200]
+Output features: [500, 500, 200, 1]
+
+# settings for the RNN
+bidirectional: False
+hidden size: 500
