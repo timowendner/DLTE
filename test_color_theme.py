@@ -7,6 +7,7 @@ from glob import glob
 integer_var = 123
 float_var = 123.423
 complex_var = 1 + 2j
+test = 1 | 2 * complex_var & 5 % 3 @ 325 ^ 364
 
 # String type
 string_var = "Hello, Python!"
