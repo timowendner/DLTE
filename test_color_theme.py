@@ -66,6 +66,14 @@ class MyDerivedClass(MyClass):
         print("Additional Info:", self.additional_info)
 
 
+for i in range(100):
+    with open('test.txt', 'r') as f:
+        f.readlines()
+
+while a < b:
+    if a == b:
+        return None
+
 # Creating instances
 obj1 = MyClass("Object 1")
 obj2 = MyDerivedClass("Object 2", "Some additional info")
