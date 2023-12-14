@@ -31,11 +31,10 @@ class MIDIDataset(Dataset):
             labels = labels[:config['debug size']]
 
         dataset = []
-        for line in tqdm(labels, desc=desc, ncols=75):
+        for line in tqdm(labels, desc=f'{desc}', ncols=80):
             path, key, num, denom, bpm = line.replace('\n', '').split(',')
-            path = os.path.join(data_path, path)
 
-            datastream = open_midi_file(path)
+            datastream = open_midi_file(os.path.join(data_path, path))
             datastream = torch.Tensor(datastream).float().T
             for i in range(config['n order differences']):
                 diffs = torch.zeros(datastream[0].shape[0])

@@ -9,14 +9,16 @@ from .training_testing import train_network
 from .model import CNN, RNN
 
 
-def main(config_path: str) -> nn.Module:
+def main(config_path: str, model: nn.Module = None) -> nn.Module:
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     config['device'] = device
 
-    if config['model class'] == 'CNN':
+    if model is not None:
+        pass
+    elif config['model class'] == 'CNN':
         model = CNN(config)
     elif config['model class'] == 'RNN':
         model = RNN(config)

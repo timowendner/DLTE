@@ -6,8 +6,8 @@ output file: MeterTest/output/outputs.txt
 write every n iteration: 10
 
 train split: 0.8
-learning rate: 0.001
-train epochs: 250
+learning rate: 0.0001
+train epochs: 50
 batch size: 16
 Data Length: 350
 Dropout: 0.25
@@ -26,4 +26,4 @@ Output features: [500, 200, 1]
 bidirectional: False
 hidden size: 500
 
-debug size: 20
+# debug size: 20

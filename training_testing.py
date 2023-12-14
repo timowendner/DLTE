@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 from torch import nn
 from tqdm import tqdm
-from itertools import product
+from itertools import chain
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import Optimizer
 
@@ -14,10 +14,10 @@ from .utils import TempoLoss, write_file
 
 
 def train_network(
-    model: nn.Module, 
-    optimizer: Optimizer, 
-    dataset: Dataset, 
-    prediction_set: Dataset, 
+    model: nn.Module,
+    optimizer: Optimizer,
+    dataset: Dataset,
+    prediction_set: Dataset,
     config: dict
 ) -> tuple[nn.Module, Optimizer]:
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -36,9 +36,10 @@ def train_network(
     for epoch in range(1, num_epoch+1):
         time_now = datetime.datetime.now()
         time_now = time_now.strftime("%H:%M")
+        desc = f'{time_now} Starting Epoch {epoch:>3}'
         for i, (path, key, num, denom, bpm, datastream) in tqdm(
-            enumerate(train_loader), desc=f'{time_now} \tStarting Epoch {epoch:>3}',
-            ncols=75, total=len(train_loader)
+            enumerate(train_loader), desc=f'{desc:<25}',
+            ncols=80, total=len(train_loader)
         ):
             outputs = model(datastream)
             bpm = bpm.float().to(config['device'])
@@ -50,12 +51,12 @@ def train_network(
 
         lr = optimizer.param_groups[0]['lr']
         result, error = test_network(
-            model, test_loader, config, desc='\tTesting Network'
+            model, test_loader, config, desc='      Testing Network'
         )
-        print(f'\tcurrent error: {error:.4f}, lr: {lr}\n')
+        print(f'      current error: {error:.4f}, lr: {lr}\n')
         if n_iter != 0 and (epoch % n_iter == 0 or epoch == num_epoch+1):
             prediction, error = test_network(
-                model, pred_loader, config, desc='\tWriting Predictions'
+                model, pred_loader, config, desc='      Writing Predictions'
             )
             write_file(prediction, config)
     return model, optimizer
@@ -72,22 +73,23 @@ def test_network(model: nn.Module, dataloader: DataLoader, config: dict, desc: s
     n = config['check n times']
     results = {}
     truth = {}
-    tempoLoss = TempoLoss()
+    tempoLoss = compute_error
+    print_results = {}
     model.eval()
-    for i, (path, key, num, denom, bpm, datastream) in tqdm(
-        product(range(n), dataloader), total=len(dataloader)*n, desc=desc, ncols=75
+    for path, key, num, denom, bpm, datastream in tqdm(
+        chain(*([dataloader]*n)), total=len(dataloader)*n, desc=f'{desc:<25}', ncols=80
     ):
         pred = model(datastream).to('cpu')
         for name, prediction, gt in zip(path, pred.squeeze(), bpm):
             truth[name] = gt
             results[name] = results.get(name, 0) + float(prediction)
+            print_results[name] = print_results.get(
+                name, []) + [float(prediction)]
     errors = []
     for name, prediction in results.items():
         results[name] = prediction / n
-        error = tempoLoss(
-            torch.Tensor([results[name]]),
-            torch.Tensor([truth[name]])
-        )
+        error = tempoLoss(results[name], truth[name])
         errors.append(error)
     model.train()
+    # print(print_results)
     return results, np.mean(errors)
