@@ -5,23 +5,35 @@ import os
 from torch.utils.data import Dataset, DataLoader, random_split
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
 from tqdm import tqdm
+from typing import Union
 
 from .utils import open_midi_file
 
 
 class MIDIDataset(Dataset):
-    def __init__(self, config):
-        label_path = config['label file']
-        with open(label_path, 'r') as f:
-            labels = f.readlines()
-            labels = sorted(labels)
-            if 'debug size' in config:
-                labels = labels[:config['debug size']+1]
+    def __init__(self, data_path: str, label_path: str = None,  config: dict = None, desc: str = None) -> None:
+        if config is None:
+            raise AssertionError(
+                'config file must be provided to create MIDI dataset'
+            )
+
+        if label_path is not None:
+            with open(label_path, 'r') as f:
+                labels = f.readlines()[1:]
+        else:
+            labels = glob.glob(os.path.join(data_path, '*.mid'))
+            labels = [
+                f'{os.path.basename(path)},E,12,8,110.7' for path in labels
+            ]
+
+        labels = sorted(labels)
+        if 'debug size' in config:
+            labels = labels[:config['debug size']]
 
         dataset = []
-        for line in tqdm(labels[1:], desc='Loading Dataset', ncols=75):
+        for line in tqdm(labels, desc=desc, ncols=75):
             path, key, num, denom, bpm = line.replace('\n', '').split(',')
-            path = os.path.join(config['train folder'], path)
+            path = os.path.join(data_path, path)
 
             datastream = open_midi_file(path)
             datastream = torch.Tensor(datastream).float().T
@@ -40,10 +52,10 @@ class MIDIDataset(Dataset):
         self.data_length = config['Data Length']
         self.dataset = dataset
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.dataset)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[str, str, int, float, torch.Tensor]:
         path, key, num, denom, bpm, datastream = self.dataset[idx]
         if self.model == 'CNN':
             size = datastream.shape[1]
@@ -67,16 +79,23 @@ def rnn_collate_fn(batch):
     return path, key, num, denom, bpm, (padded_inputs, lengths)
 
 
-def get_dataloaders(dataset, config):
-    train_size = int(config['train split'] * len(dataset))
+def get_dataloaders(dataset: Dataset, config: dict, split: int = None) -> Union[DataLoader, tuple[DataLoader, DataLoader]]:
+    batch_size = config['batch size']
+    collate = rnn_collate_fn if config['model class'] == 'RNN' else None
+
+    if split is None:
+        pred_loader = DataLoader(
+            dataset, batch_size, shuffle=False, collate_fn=collate
+        )
+        return pred_loader
+
+    train_size = int(split * len(dataset))
     test_size = len(dataset) - train_size
 
     train_dataset, test_dataset = random_split(
         dataset, [train_size, test_size]
     )
 
-    batch_size = config['batch size']
-    collate = rnn_collate_fn if config['model class'] == 'RNN' else None
     train_loader = DataLoader(
         train_dataset, batch_size, shuffle=True, collate_fn=collate
     )

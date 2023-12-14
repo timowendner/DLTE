@@ -6,7 +6,7 @@ from torch import sin, cos, pow, Tensor
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
 
 
-def convolve(in_channel: int, out_channel: int, kernel: int = 3, dropout: int = 0.2):
+def convolve(in_channel: int, out_channel: int, kernel: int = 3, dropout: int = 0.2) -> nn.Sequential:
     return nn.Sequential(
         nn.Conv1d(in_channel, out_channel,
                   kernel_size=kernel, padding=kernel//2),

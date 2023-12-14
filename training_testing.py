@@ -4,35 +4,40 @@ import datetime
 import numpy as np
 from torch import nn
 from tqdm import tqdm
+from itertools import product
 from torch.utils.data import Dataset, DataLoader
+from torch.optim import Optimizer
 
 
 from .dataloader import get_dataloaders, MIDIDataset, rnn_collate_fn
-from .utils import TempoLoss, FileWriter
+from .utils import TempoLoss, write_file
 
 
-def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
+def train_network(
+    model: nn.Module, 
+    optimizer: Optimizer, 
+    dataset: Dataset, 
+    prediction_set: Dataset, 
+    config: dict
+) -> tuple[nn.Module, Optimizer]:
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Number of trainable parameters: {num_params:,}")
 
-    dataset = MIDIDataset(config)
-    train_loader, test_loader = get_dataloaders(dataset, config)
+    train_loader, test_loader = get_dataloaders(
+        dataset, config, split=config['train split']
+    )
+    pred_loader = get_dataloaders(prediction_set, config, split=None)
 
     model.train()
     tempoLoss = TempoLoss()
 
     n_iter = config['write every n iteration']
-    if n_iter != 0:
-        fileWriter = FileWriter(config)
-
-    start_time = time.time()
     num_epoch = config['train epochs']
     for epoch in range(1, num_epoch+1):
-
         time_now = datetime.datetime.now()
         time_now = time_now.strftime("%H:%M")
         for i, (path, key, num, denom, bpm, datastream) in tqdm(
-            enumerate(train_loader), desc=f'{time_now} Starting Epoch {epoch:>3}',
+            enumerate(train_loader), desc=f'{time_now} \tStarting Epoch {epoch:>3}',
             ncols=75, total=len(train_loader)
         ):
             outputs = model(datastream)
@@ -44,39 +49,45 @@ def train_network(model: nn.Module, optimizer: torch.optim, config: dict):
             optimizer.step()
 
         lr = optimizer.param_groups[0]['lr']
-        error = test_network(model, test_loader, config)
-        print(f'\t current error: {error:.4f}, lr: {lr}\n')
+        result, error = test_network(
+            model, test_loader, config, desc='\tTesting Network'
+        )
+        print(f'\tcurrent error: {error:.4f}, lr: {lr}\n')
         if n_iter != 0 and (epoch % n_iter == 0 or epoch == num_epoch+1):
-            fileWriter.write(model)
+            prediction, error = test_network(
+                model, pred_loader, config, desc='\tWriting Predictions'
+            )
+            write_file(prediction, config)
     return model, optimizer
 
 
-def compute_tempo_error(model: nn.Module, dataloader: DataLoader):
-    model.eval()
-    tempoLoss = TempoLoss()
-    error = torch.tensor([])
-    for path, key, num, denom, bpm, datastream in dataloader:
-        pred = model(datastream)
-        current = tempoLoss(pred.squeeze(), bpm.float())
-        error = torch.cat([error, current])
-    model.train()
-    return float(torch.mean(error))
+def compute_error(predictions: float, targets: float) -> float:
+    tempo_error = abs(predictions - targets)
+    half_tempo_error = abs(0.5 * predictions - targets)
+    double_tempo_error = abs(2 * predictions - targets)
+    return min(tempo_error, half_tempo_error, double_tempo_error)
 
 
-def test_network(model: nn.Module, dataloader: DataLoader, config: dict):
-    collate = rnn_collate_fn if config['model class'] == 'RNN' else None
-    dataloader = DataLoader(
-        dataloader.dataset, batch_size=1, collate_fn=collate
-    )
-    model.eval()
+def test_network(model: nn.Module, dataloader: DataLoader, config: dict, desc: str = None) -> tuple[dict, float]:
+    n = config['check n times']
+    results = {}
+    truth = {}
     tempoLoss = TempoLoss()
-    errors = []
-    for path, key, num, denom, bpm, datastream in tqdm(
-        dataloader, desc='\t Testing Network', ncols=75, leave=False, total=len(dataloader)
+    model.eval()
+    for i, (path, key, num, denom, bpm, datastream) in tqdm(
+        product(range(n), dataloader), total=len(dataloader)*n, desc=desc, ncols=75
     ):
-        pred = model(datastream)
-        error = tempoLoss(pred.squeeze(), bpm.float())
-        errors.append(float(error))
-
+        pred = model(datastream).to('cpu')
+        for name, prediction, gt in zip(path, pred.squeeze(), bpm):
+            truth[name] = gt
+            results[name] = results.get(name, 0) + float(prediction)
+    errors = []
+    for name, prediction in results.items():
+        results[name] = prediction / n
+        error = tempoLoss(
+            torch.Tensor([results[name]]),
+            torch.Tensor([truth[name]])
+        )
+        errors.append(error)
     model.train()
-    return float(np.mean(errors))
+    return results, np.mean(errors)
