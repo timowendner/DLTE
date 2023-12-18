@@ -32,7 +32,7 @@ class TempoLoss(nn.Module):
 
     def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         tempo_error = torch.mean(torch.abs(predictions - targets))
-        return tempo_error ** 2
+        # return tempo_error ** 2
         half_tempo_error = torch.mean(torch.abs(0.5 * predictions - targets))
         double_tempo_error = torch.mean(torch.abs(2 * predictions - targets))
         return torch.min(torch.min(tempo_error, half_tempo_error), double_tempo_error) ** 2
