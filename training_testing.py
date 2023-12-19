@@ -20,6 +20,18 @@ def train_network(
     prediction_set: Dataset,
     config: dict
 ) -> tuple[nn.Module, Optimizer]:
+    """Train the network
+
+    Args:
+        model (nn.Module): the used model
+        optimizer (Optimizer): the used optimizer
+        dataset (Dataset): the dataset to train on
+        prediction_set (Dataset): the dataset to predict to
+        config (dict): the config file
+
+    Returns:
+        tuple[nn.Module, Optimizer]: the trained model, the current optimizer
+    """
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Number of trainable parameters: {num_params:,}")
 

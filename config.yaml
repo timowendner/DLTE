@@ -3,7 +3,6 @@ prediction folder: 'MeterTest/testset'
 label file: 'MeterTest/trainset/key-meter_train_gt.txt'
 output file: MeterTest/output/outputs.txt
 
-write every n iteration: 10
 
 train split: 0.8
 learning rate: 0.0001
@@ -11,7 +10,18 @@ train epochs: 50
 batch size: 16
 Data Length: 350
 Dropout: 0.25
+
+# compute the n-order differences for the starting points.
+# meaning the differences for the first values to the second.
+# first order differences for [1, 2, 4, 5] is [0, 1, 2, 1]
 n order differences: 36
+
+# write the predictions every n iteration.
+# this is done because the prediction is costly
+write every n iteration: 10
+
+# for every prediction (and testing) compute n predictions and
+# get the mean of those predictions.
 check n times: 10
 
 # the model class: 'CNN', 'RNN'
@@ -26,4 +36,6 @@ Output features: [500, 200, 1]
 bidirectional: False
 hidden size: 500
 
+# use the debug size for only loading 20 files instead of the
+# whole dataset. (comment out if using the whole dataset)
 # debug size: 20
