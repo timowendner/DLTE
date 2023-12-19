@@ -8,12 +8,6 @@ setup(
         'mido',
         'torch',
     ],
-    entry_points={
-        'console_scripts': [
-            'DLTE = DLTE.main:main',
-        ],
-    },
-    # Other metadata goes here
     author='Timo Wendner',
     author_email='timo.wendner@gmail.com',
     description='Torch Project to predict the Tempo for Midi files',
