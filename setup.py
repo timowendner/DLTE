@@ -10,7 +10,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'train_model = main:main',
+            'DLTE = DLTE.main:main',
         ],
     },
     # Other metadata goes here
