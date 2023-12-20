@@ -18,7 +18,9 @@ classifiers = [
 ]
 dependencies = [
   'PyYAML',
-  'tqdm'
+  'tqdm',
+  'mido',
+  'torch'
 ]
 
 [project.urls]
