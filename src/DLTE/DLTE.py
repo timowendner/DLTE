@@ -10,6 +10,15 @@ from .model import CNN, RNN
 
 
 def run(config_path: str, model: nn.Module = None) -> nn.Module:
+    """Run a Neural Network model to predict the tempo of a MIDI file
+
+    Args:
+        config_path (str): path to the config file
+        model (nn.Module, optional): already trained model. Defaults to None.
+
+    Returns:
+        nn.Module: the trained model
+    """
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
