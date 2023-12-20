@@ -2,6 +2,8 @@ testset/*
 trainset/*
 output/*
 __pycache__/*
+*.pyc
+DLTE.egg-info
 
 testing.ipynb
 launch.json

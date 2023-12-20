@@ -9,7 +9,7 @@ from .training_testing import train_network
 from .model import CNN, RNN
 
 
-def main(config_path: str, model: nn.Module = None) -> nn.Module:
+def run(config_path: str, model: nn.Module = None) -> nn.Module:
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
@@ -44,6 +44,10 @@ def main(config_path: str, model: nn.Module = None) -> nn.Module:
         model, optimizer, dataset, prediction_set, config
     )
     return model
+
+
+def main():
+    run(args.config)
 
 
 if __name__ == '__main__':

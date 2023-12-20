@@ -16,17 +16,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+  'PyYAML',
+  'tqdm'
+]
 
 [project.urls]
 Homepage = "https://github.com/timowendner/DLTE"
-
-[tool.poetry.dependencies]
-python = "^3.8"
-mido = "*"
-torch = "*"
-yaml = "*"
-tqdm = "*"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
